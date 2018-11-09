@@ -33,7 +33,7 @@ console.log(colors);
 console.log(colors.length);
 
 //function
-function greet(name){
+function greet(name = 'Alex'){
     console.log('Yo ' + name);
 }
 
@@ -41,7 +41,9 @@ function square(number){
     return number*number;
 }
 
+greet();
 greet('Ali');
+
 let sqr = square(9);
 console.log(square(99));
 
