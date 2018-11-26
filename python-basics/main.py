@@ -25,6 +25,8 @@ README with instructions on how to build and run your program.
 Code is tested
 
 How do i know what is the root directory? is the cmd line tool run from inside the dir?
+
+python3 main.py -v alovelace -cf src/com/twitter/follow/Follow.java
 '''
 
 #!/usr/bin/python3
@@ -42,7 +44,7 @@ class Approvals_Validator:
         parser.add_argument('-v', '--validators', nargs='+',
                             help='validators for files')
         parser.add_argument('-cf', '--changed-files', nargs='+',
-                            help='changed files')
+                            help='changeddd files')
         args = parser.parse_args()
         self.validators = args.validators
         self.changed_files = args.changed_files
@@ -91,14 +93,20 @@ class Approvals_Validator:
         return dependencies
 
     def get_required_approvers(self):
+        #print("DEBUG: ", self.validators)
+        #print("DEBUG: ", self.changed_files)
+        
         def update_result(dictionary, keys, value):
             for key in keys:
                 dictionary[key].append(value)
-
+            #print("DEBUG: ", dictionary)
+        
         stack_files = deque()
         required_approvers = defaultdict(list)
         # initial set of files to be reviewed
         stack_files.extend(self.changed_files)
+        print("DEBUG: ", stack_files)
+
         visited = set()
 
         while stack_files:
