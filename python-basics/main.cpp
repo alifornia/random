@@ -5,6 +5,8 @@
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>
 #include <exception>
+#include <unordered_set>
+#include <unordered_map>
 
 using namespace std;
 namespace po = boost::program_options; //using namespace boost;
@@ -18,8 +20,9 @@ private:
     string repo_path;
     vector<string> approvers, changed_files, required_approvers, dependencies;
     void process_program_options(const int ac, const char *const av[]);
-    void read_file(string path);
-    void get_required_approvers();
+    void get_dependecies(string path);
+    void get_owners(string path);
+    unordered_map<string, vector<string>> get_approvers();
 public:
     TwitterApprovalSystem(int argc, char** argv){
         process_program_options(argc, argv);
@@ -32,24 +35,42 @@ void TwitterApprovalSystem::process_program_options(const int ac, const char *co
     desc.add_options()
         ("approvers,a", po::value(&approvers)->multitoken(), "List of approvers") //("help,h", "produce help message")
         ("changed-files,c", po::value(&changed_files)->multitoken(), "List of changed files");
-    try{po::variables_map vm;
+    try
+    {
+        po::variables_map vm;
         po::store(po::parse_command_line(ac, av, desc), vm);
         po::notify(vm);
-    }catch(exception& e){cout << e.what() << endl;exit( EXIT_FAILURE );}
+    }
+    catch(exception& e){cout << e.what() << endl;exit( EXIT_FAILURE );}
     cout << "Approveres: " << approvers << " | Changed files: " << changed_files << endl; //cout << vm["changed-files"].as< vector<string> >();
 
 }
 
-void TwitterApprovalSystem::get_required_approvers(){
-    while(!changed_files.empty()){
+unordered_map<string, vector<string>> TwitterApprovalSystem::get_approvers(){
+    unordered_set<string> visited_path; //make sure set is faster than map
+    string current_path, parent_path;
+    unordered_map<string, vector<string>> required_approvers;
+
+    while(!changed_files.empty()){ ///!!!! use  stack to do one operatn?!! vetcor has better performace tho!!!!
+        current_path = changed_files.front;
+        changed_files.pop_back(); 
+        //if not visited 
+        visited_path.insert(current_path);
+        //get OWNERS
         
+        //Hashmapp? STL unorder_map is fast
+
+
+        //get DEPENDECIES ??????? of this dir ot everything deps on this CHECK WITH TWITTER
+        //add to stack
+
         cout << "DEBUD: not empty" << endl;
-        return;
+        return required_approvers;
     }
 }
 
 bool TwitterApprovalSystem::is_approved(){
-    if(required_approvers == approvers) //handle order!!!!
+    if(required_approvers == approvers) //handle order!!!! == is fast but NO ORDER
         return true;
     return false;
 }
