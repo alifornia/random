@@ -2,8 +2,20 @@
 #include <iterator>
 #include <string>
 #include <vector>
+
+#include <iostream>
+#include <fstream>
+#include <cstdio>
+#include <cstring>
+//#include <experimental/filesystem>
+#include <filesystem>
+#include <unistd.h>
+
+
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>
+#include "boost/filesystem/operations.hpp"
+#include "boost/filesystem/path.hpp"
 #include <exception>
 #include <unordered_set>
 #include <unordered_map>
@@ -11,6 +23,8 @@
 
 using namespace std;
 namespace po = boost::program_options; //using namespace boost;
+namespace fs = boost::filesystem;
+
 
 template<class T>
 ostream& operator<<(ostream& os, const vector<T>& v){ // print util CMT laterrr
@@ -18,6 +32,8 @@ ostream& operator<<(ostream& os, const vector<T>& v){ // print util CMT laterrr
     return os;
 }
 
+//g++ -std=c++17  TwitterCodebaseApprovalSystem.cpp -I ~/Downloads/boost_1_68_0/Program/include/boost-1_68/ -L ~/Downloads/boost_1_68_0/Program/lib/ -lboost_program_options-mgw81-mt-d-x32-1_68
+//g++ -std=c++17  TwitterCodebaseApprovalSystem.cpp -I C\:/Program\ Files/boost/include/boost-1_68  -L C\:/Program\ Files/boost/lib -lboost_program_options-mgw81-mt-d-x32-1_68 -lboost_filesystem-mgw81-mt-d-x32-1_68 -lboost_system-mgw81-mt-d-x32-1_68
 
 class TwitterCodebaseApprovalSystem{
 private:
@@ -36,7 +52,7 @@ private:
 
 public:
     TwitterCodebaseApprovalSystem(int argc, char** argv){
-        //repo_path===CWD root repo 
+        repo_path=(fs::current_path()).string();    //cout << fs::system_complete(argv[0]) << endl;
         process_program_options(argc, argv);
     }
     bool is_approved();
@@ -65,12 +81,16 @@ void TwitterCodebaseApprovalSystem::process_program_options(const int ac, const 
 }
 
 string TwitterCodebaseApprovalSystem::get_parent_dir(string dir_path){
-    string parent_dir_path;
+    string parent_dir_path =((fs::path(dir_path)).parent_path()).string();
+    cout << parent_dir_path << endl;
     //use boost util to get parent path or just truncate
     return parent_dir_path;
 }
 vector<string> TwitterCodebaseApprovalSystem::get_dependecies(string dir_path){
     vector<string> dependencies;
+    if ( fs::is_regular_file(fs::status(dir_path+"\\DEPENDENCIES")) ); //windowsssss
+        //cout << "yes" << endl;
+
     //read DEPS file if exist add to dependencies
     return dependencies;
 }
@@ -116,6 +136,13 @@ bool TwitterCodebaseApprovalSystem::is_approved(){
     return false;
 }
 int main(int argc, char** argv){
+    //string pp1 = (std::experimental::filesystem::current_path()).string()+"asdasd";
+    string pp2 = (fs::current_path()).string()+"asdasd";
+    cout << pp2 << endl;
+
+    if ( std::filesystem::exists(std::filesystem::status(pp)) && !std::filesystem::is_directory(std::filesystem::status(pp)) ); //windowsssss
+    //if ( std::experimental::filesystem::exists(std::experimental::filesystem::status(pp)) && !std::experimental::filesystem::is_directory(std::experimental::filesystem::status(pp)) ); //windowsssss
+        cout << "yes" << endl;
     TwitterCodebaseApprovalSystem app(argc, argv);
     if(app.is_approved())
         cout << "Approved" << endl;
