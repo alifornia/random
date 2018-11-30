@@ -15,6 +15,7 @@
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>
 #include "boost/filesystem/operations.hpp"
+#include "boost/filesystem/fstream.hpp"
 #include "boost/filesystem/path.hpp"
 #include <exception>
 #include <unordered_set>
@@ -43,7 +44,10 @@ private:
     vector<string> changed_files;
 
     vector<string> required_approvals;
-    unordered_map <string , vector<pair<string, vector<string> > > > dependencies; //DEP[DIRx] = { (DIRy,{OWNy1, OWNy2}) , (DIRz,{OWNz1}) ,... }  
+    //unordered_map <string , vector< pair< string, vector<string> > > > dependencies; //DEP[DIRx] = { (DIRy,{OWNy1, OWNy2}) , (DIRz,{OWNz1}) ,... }  
+    //instead DEP[DIRx] = { {DIRy,OWNy1, OWNy2} , {DIRz,OWNz1} ,... }  assume the first one is always direcotry and the rest is owners
+    //unordered_map gets confused by pair or you shouls define a hash function
+    unordered_map <string , vector< vector<string> > > dependencies; 
     vector< vector <string> > owners; 
 
     void process_program_options(const int ac, const char *const av[]);
@@ -51,7 +55,7 @@ private:
 
     void get_dependecies();
 
-    vector<string> get_owners(string dir_path);
+    vector<string> get_dirs_and_owners(fs::path dir_path);
     unordered_map<string, vector<string>> get_required_approvals();
     unordered_map<string, vector<string> , vector<string> > index_dirs(); //owners maybe make a classss?~!?!!
 public:
@@ -63,6 +67,12 @@ public:
         // shoudl be this (because one may run the command in a different directory): repo_path=(changed_files[0] - fs::current_path()).string();    //cout << fs::system_complete(argv[0]) << endl;
         cout << "GET DPS" << endl;
         get_dependecies();
+        cout << "GET DPS" << endl;
+        for(const auto& dep : dependencies){
+            cout << dep.first << " APPEARED IN: " << endl;
+            for(const auto& d_a_o: dep.second)
+                cout <<  d_a_o << endl;
+        }
         cout << "GET DPS" << endl;
     }
     bool is_approved();
@@ -101,11 +111,38 @@ string TwitterCodebaseApprovalSystem::get_parent_dir(string dir_path){
 }
 void TwitterCodebaseApprovalSystem::get_dependecies(){
     string dir_path;
+    string line;
+    //pair<string, vector<string> > dirs_and_owners;
+    vector<string> dirs_and_owners;
+    //DO theseee: string dep_file_name; fs::path dep_file_path;
     for ( fs::recursive_directory_iterator end, dir("./"); dir != end; ++dir ) {
-        if( fs::is_regular_file( (dir.status())) )
-            if(dir->path().filename() == "DEPENDENCIES")//cout << dir->path().filename() << endl;
+        if( fs::is_regular_file( (dir.status())) ){ // dir=/etc/DEP 
+            if( dir->path().filename() == "DEPENDENCIES"){//cout << dir->path().filename() << endl; //std::cout << *dir << "\n";  // full path
+                fs::ifstream file(dir->path()); // DEP contians /src
+                cout << *dir << "\n";
+                //dirs_and_owners =  {dir->path().parent_path().string() , get_owners(dir->path())} ; // / {etc, [d] }
+                dirs_and_owners = get_dirs_and_owners(dir->path());
+                cout << dirs_and_owners << endl;
                 
-                std::cout << *dir << "\n";  // full path
+                while(getline(file, line)){
+                    cout << line << ":: " << endl;
+                    unordered_map<string, vector<vector<string> >>::const_iterator got = dependencies.find (line);
+
+                    if(got != dependencies.end()){ // if exist
+                        cout << "EXIST" << endl;
+                        dependencies[line].push_back(dirs_and_owners);
+                        //got->second.push_back(dirs_and_owners);
+                    }
+                    else{
+                        cout << "NOT EXIST" << endl;
+                        vector<vector<string> > new_dirs_and_owners={dirs_and_owners};
+                        dependencies.insert( {line , new_dirs_and_owners} ); // { /src --> {etc, [d] } }
+                        //dependencies.first = line;
+                        //dependencies.second.push_back(dirs_and_owners);
+                    }
+                }
+            }
+        }
         //std::cout << dir->path().filename() << "\n"; // just last bit
     }
 
@@ -115,11 +152,13 @@ void TwitterCodebaseApprovalSystem::get_dependecies(){
     //read DEPS file if exist add to dependencies
 }
 
-vector<string> TwitterCodebaseApprovalSystem::get_owners(string dir_path){
-    vector<string> owners;
+vector<string> TwitterCodebaseApprovalSystem::get_dirs_and_owners(fs::path dir_path){
+    vector<string> dirs_and_owners;
+    dirs_and_owners.push_back(dir_path.parent_path().string()); // add the dir to the first elemt and then owner to avoid using pair BETTER PERFOMACE
+
     //while( if no OWNERS exist in dir_path) goto parent
     //read OWNERS file 
-    return owners;
+    return dirs_and_owners;
 }
 
 unordered_map<string, vector<string>> TwitterCodebaseApprovalSystem::get_required_approvals(){
@@ -136,7 +175,7 @@ unordered_map<string, vector<string>> TwitterCodebaseApprovalSystem::get_require
         changed_files.pop_back(); 
         //if not visited 
         visited_path.insert(current_path); //parent or current checkkkkk
-        owners = get_owners(current_path);
+        //owners = get_owners(current_path);
         
         //Hashmapp? STL unorder_map is fast
 
@@ -233,28 +272,33 @@ so I have to store all the dependecies which is not space-ideal.
         test/com   ---->   {a, b}
         src/com    ---->   {b, c}
     add DEP_HASH[src/com]
+    OWNER_HASH
         test/com   ---->   {a, b}
         src/com    ---->   {b, c}
         etc        ---->   {d}
         lib        ---->   {b}
 
 
+[] vector
+{} pair
+() hassh/ set
 1')  parse all dirs and find all dependecies
     DEP_HASH
-        src/com    ---->   { (etc,{a}) , (lib,{b}) , }  
-        test/com   ---->   { (src/com,{b,c}) , }
+        src/com    ---->   ( {etc,[d]} , (lib,[b]) , )  
+        test/com   ---->   ( {src/com,[b,c]} , )
 2')  now if make owners (set is enough)
     OWNER_SET
-        {a, b}
+        [a, b]
     done with initial add
-    add DEP_HASH[test/com]
-    OWNER_HASH
-        {a, b}
-        {b, c}
-    add DEP_HASH[src/com]
-        {a, b}
-        {b, c}
-        {d}
-        {b}
+    add DEP_HASH(test/com)
+    OWNER_SET
+        [a, b]
+        [b, c]
+    add DEP_SET(src/com)
+    OWNER_SET
+        [a, b]
+        [b, c]
+        [d]
+        [b]
 */
 
