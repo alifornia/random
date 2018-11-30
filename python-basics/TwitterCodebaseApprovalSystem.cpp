@@ -119,22 +119,22 @@ void TwitterCodebaseApprovalSystem::get_dependecies(){
         if( fs::is_regular_file( (dir.status())) ){ // dir=/etc/DEP 
             if( dir->path().filename() == "DEPENDENCIES"){//cout << dir->path().filename() << endl; //std::cout << *dir << "\n";  // full path
                 fs::ifstream file(dir->path()); // DEP contians /src
-                cout << *dir << "\n";
+                //cout << *dir << "\n";
                 //dirs_and_owners =  {dir->path().parent_path().string() , get_owners(dir->path())} ; // / {etc, [d] }
-                dirs_and_owners = get_dirs_and_owners(dir->path());
-                cout << dirs_and_owners << endl;
+                dirs_and_owners = get_dirs_and_owners(dir->path().parent_path());
+                //cout << dirs_and_owners << endl;
                 
                 while(getline(file, line)){
-                    cout << line << ":: " << endl;
+                    //cout << line << ":: " << endl;
                     unordered_map<string, vector<vector<string> >>::const_iterator got = dependencies.find (line);
 
                     if(got != dependencies.end()){ // if exist
-                        cout << "EXIST" << endl;
+                        //cout << "EXIST" << endl;
                         dependencies[line].push_back(dirs_and_owners);
                         //got->second.push_back(dirs_and_owners);
                     }
                     else{
-                        cout << "NOT EXIST" << endl;
+                        //cout << "NOT EXIST" << endl;
                         vector<vector<string> > new_dirs_and_owners={dirs_and_owners};
                         dependencies.insert( {line , new_dirs_and_owners} ); // { /src --> {etc, [d] } }
                         //dependencies.first = line;
@@ -155,7 +155,15 @@ void TwitterCodebaseApprovalSystem::get_dependecies(){
 vector<string> TwitterCodebaseApprovalSystem::get_dirs_and_owners(fs::path dir_path){
     vector<string> dirs_and_owners;
     dirs_and_owners.push_back(dir_path.parent_path().string()); // add the dir to the first elemt and then owner to avoid using pair BETTER PERFOMACE
-
+    string line;
+    dir_path /=  "OWNERS";
+    cout << "Yooo " << dir_path << endl;
+    if(fs::exists(dir_path)){ // dir=/etc/DEP 
+        fs::ifstream file(dir_path); // DEP contians /src       
+        while(getline(file, line)){
+            dirs_and_owners.push_back(line);
+        }
+    }
     //while( if no OWNERS exist in dir_path) goto parent
     //read OWNERS file 
     return dirs_and_owners;
