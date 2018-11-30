@@ -38,19 +38,15 @@ ostream& operator<<(ostream& os, const vector<T>& v){ // print util CMT laterrr
 class TwitterCodebaseApprovalSystem{
 private:
     string repo_path;
-    
     vector<string> approvers;
     vector<string> changed_files;
-
     vector<string> required_approvals;
-    unordered_map <string , vector<pair<string, vector<string> > > > dependencies; //DEP[DIRx] = { (DIRy,{OWNy1, OWNy2}) , (DIRz,{OWNz1}) ,... }  
-    vector< vector <string> > owners; 
+    vector<string> dependencies;
 
     void process_program_options(const int ac, const char *const av[]);
     string get_parent_dir(string dir_path); //use boost util
 
-    void get_dependecies();
-
+    vector<string> get_dependecies(string dir_path); //??????????????? others deps or its deps?
     vector<string> get_owners(string dir_path);
     unordered_map<string, vector<string>> get_required_approvals();
     unordered_map<string, vector<string> , vector<string> > index_dirs(); //owners maybe make a classss?~!?!!
@@ -61,9 +57,6 @@ public:
         repo_path=(fs::current_path()).string();    //cout << fs::system_complete(argv[0]) << endl;
         cout << repo_path << endl;
         // shoudl be this (because one may run the command in a different directory): repo_path=(changed_files[0] - fs::current_path()).string();    //cout << fs::system_complete(argv[0]) << endl;
-        cout << "GET DPS" << endl;
-        get_dependecies();
-        cout << "GET DPS" << endl;
     }
     bool is_approved();
 };
@@ -99,20 +92,13 @@ string TwitterCodebaseApprovalSystem::get_parent_dir(string dir_path){
     //use boost util to get parent path or just truncate
     return parent_dir_path;
 }
-void TwitterCodebaseApprovalSystem::get_dependecies(){
-    string dir_path;
-    for ( fs::recursive_directory_iterator end, dir("./"); dir != end; ++dir ) {
-        if( fs::is_regular_file( (dir.status())) )
-            if(dir->path().filename() == "DEPENDENCIES")//cout << dir->path().filename() << endl;
-                
-                std::cout << *dir << "\n";  // full path
-        //std::cout << dir->path().filename() << "\n"; // just last bit
-    }
-
+vector<string> TwitterCodebaseApprovalSystem::get_dependecies(string dir_path){
+    vector<string> dependencies;
     if ( fs::is_regular_file(fs::status(dir_path+"/DEPENDENCIES")) ) //windowsssss
         cout << "yes" << endl;
 
     //read DEPS file if exist add to dependencies
+    return dependencies;
 }
 
 vector<string> TwitterCodebaseApprovalSystem::get_owners(string dir_path){
@@ -140,7 +126,7 @@ unordered_map<string, vector<string>> TwitterCodebaseApprovalSystem::get_require
         
         //Hashmapp? STL unorder_map is fast
 
-        get_dependecies();
+        dependencies = get_dependecies(current_path);
         
         //get DEPENDECIES ??????? of this dir ot everything deps on this CHECK WITH TWITTER
         //add to stack
@@ -173,21 +159,17 @@ int main(int argc, char** argv){
     if(app.is_approved())
         cout << "Approved" << endl;
     else cout << "Insufficient approvals" << endl;
-
-
-
     return 0;
 }
 
 
-/*
-I would use data storage/DB to index only once a directory and apply changes by indexing 
-however here itis only a CMD I cannpt do this so go through files everytime of the run of the program
+//I would use data storage/DB to index only once a directory and apply changes by indexing
+//however here itis only a CMD I cannpt do this so go through files everytime of the run of the program
 
 
-I also skip storing all the dependecies and store only by as I go (instead of all dependecies)
-however since I do not know what will happen as I go, I may add see some dependciens that I have passed bu they just found
-may be there is a weired strcuture like this:
+// I also skip storing all the dependecies and store only by as I go (instead of all dependecies)
+//however since I don't know what will happen as I go, I may add see some dependciens that I have passed bu they just found
+//may be there is a weired strcuture like this:
 
 /repo
     /etc
@@ -226,35 +208,15 @@ so I have to store all the dependecies which is not space-ideal.
         test/com    ---->   {src/com, }
 2)  now if make owners
     OWNER_HASH
-        test/com   ---->   {a, b}
+         test/com   ---->   {a, b}
     done with initial add
     add DEP_HASH[test/com]
     OWNER_HASH
         test/com   ---->   {a, b}
         src/com    ---->   {b, c}
     add DEP_HASH[src/com]
-        test/com   ---->   {a, b}
-        src/com    ---->   {b, c}
         etc        ---->   {d}
         lib        ---->   {b}
 
 
-1')  parse all dirs and find all dependecies
-    DEP_HASH
-        src/com    ---->   { (etc,{a}) , (lib,{b}) , }  
-        test/com   ---->   { (src/com,{b,c}) , }
-2')  now if make owners (set is enough)
-    OWNER_SET
-        {a, b}
-    done with initial add
-    add DEP_HASH[test/com]
-    OWNER_HASH
-        {a, b}
-        {b, c}
-    add DEP_HASH[src/com]
-        {a, b}
-        {b, c}
-        {d}
-        {b}
-*/
 
