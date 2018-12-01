@@ -51,12 +51,11 @@ private:
     vector< vector <string> > owners; 
 
     void process_program_options(const int ac, const char *const av[]);
-    string get_parent_dir(string dir_path); //use boost util
 
     void get_dependecies();
 
     vector<string> get_dirs_and_owners(fs::path dir_path);
-    unordered_map<string, vector<string>> get_required_approvals();
+    //unordered_map<string, vector<string>> get_required_approvals();
     unordered_map<string, vector<string> , vector<string> > index_dirs(); //owners maybe make a classss?~!?!!
 public:
     TwitterCodebaseApprovalSystem(int argc, char** argv){
@@ -103,12 +102,6 @@ void TwitterCodebaseApprovalSystem::process_program_options(const int ac, const 
 
 }
 
-string TwitterCodebaseApprovalSystem::get_parent_dir(string dir_path){
-    string parent_dir_path =((fs::path(dir_path)).parent_path()).string();
-    cout << parent_dir_path << endl;
-    //use boost util to get parent path or just truncate
-    return parent_dir_path;
-}
 void TwitterCodebaseApprovalSystem::get_dependecies(){
     string dir_path;
     string line;
@@ -119,7 +112,7 @@ void TwitterCodebaseApprovalSystem::get_dependecies(){
         if( fs::is_regular_file( (dir.status())) ){ // dir=/etc/DEP 
             if( dir->path().filename() == "DEPENDENCIES"){//cout << dir->path().filename() << endl; //std::cout << *dir << "\n";  // full path
                 fs::ifstream file(dir->path()); // DEP contians /src
-                //cout << *dir << "\n";
+                cout << *dir << "\n";
                 //dirs_and_owners =  {dir->path().parent_path().string() , get_owners(dir->path())} ; // / {etc, [d] }
                 dirs_and_owners = get_dirs_and_owners(dir->path().parent_path());
                 //cout << dirs_and_owners << endl;
@@ -154,48 +147,22 @@ void TwitterCodebaseApprovalSystem::get_dependecies(){
 
 vector<string> TwitterCodebaseApprovalSystem::get_dirs_and_owners(fs::path dir_path){
     vector<string> dirs_and_owners;
-    dirs_and_owners.push_back(dir_path.parent_path().string()); // add the dir to the first elemt and then owner to avoid using pair BETTER PERFOMACE
+    dirs_and_owners.push_back(dir_path.string()); // add the dir to the first elemt and then owner to avoid using pair BETTER PERFOMACE
     string line;
-    dir_path /=  "OWNERS";
-    cout << "Yooo " << dir_path << endl;
-    if(fs::exists(dir_path)){ // dir=/etc/DEP 
-        fs::ifstream file(dir_path); // DEP contians /src       
-        while(getline(file, line)){
-            dirs_and_owners.push_back(line);
-        }
+    fs::path owner_file = dir_path;
+    owner_file /="OWNERS";
+    while(!fs::exists(owner_file)){
+        dir_path = dir_path.parent_path();
+        owner_file = dir_path;
+        owner_file /="OWNERS";
     }
-    //while( if no OWNERS exist in dir_path) goto parent
-    //read OWNERS file 
+    fs::ifstream file(owner_file); // DEP contians /src       
+    while(getline(file, line)){
+        dirs_and_owners.push_back(line);
+    }
     return dirs_and_owners;
 }
 
-unordered_map<string, vector<string>> TwitterCodebaseApprovalSystem::get_required_approvals(){
-    unordered_set<string> visited_path; //make sure set is faster than map
-    string current_path, parent_path; 
-    vector<string> owners;
-    vector<string> dependencies;
-
-    unordered_map<string, vector<string>> required_approvals;
-
-    while(!changed_files.empty()) ///!!!! use  stack to do one operatn?!! vetcor has better performace tho!!!!
-    { 
-        current_path = changed_files.front();
-        changed_files.pop_back(); 
-        //if not visited 
-        visited_path.insert(current_path); //parent or current checkkkkk
-        //owners = get_owners(current_path);
-        
-        //Hashmapp? STL unorder_map is fast
-
-        get_dependecies();
-        
-        //get DEPENDECIES ??????? of this dir ot everything deps on this CHECK WITH TWITTER
-        //add to stack
-
-        cout << "DEBUD: not empty" << endl;
-    }
-    return required_approvals;
-}
 
 bool TwitterCodebaseApprovalSystem::is_approved(){
     if(required_approvals == approvers) //handle order!!!! == is fast but NO ORDER
@@ -292,21 +259,27 @@ so I have to store all the dependecies which is not space-ideal.
 () hassh/ set
 1')  parse all dirs and find all dependecies
     DEP_HASH
-        src/com    ---->   ( {etc,[d]} , (lib,[b]) , )  
-        test/com   ---->   ( {src/com,[b,c]} , )
+        src/com    ---->   ( [etc,[d]] , [lib,[b]] , )  
+        test/com   ---->   ( [src/com,[b,c]] , )
 2')  now if make owners (set is enough)
+    add FILE owners easy => [a,b]
     OWNER_SET
         [a, b]
-    done with initial add
-    add DEP_HASH(test/com)
+    DONE
+
+    see if DEP_HASH[test/com] exist => yes => add deps [src/com,[b,c]]
     OWNER_SET
         [a, b]
         [b, c]
-    add DEP_SET(src/com)
+    find 
+    see if DEP_HASH[src/com] exist => yes add deps [etc,[d]] , [lib,[b]]
     OWNER_SET
         [a, b]
         [b, c]
         [d]
         [b]
+    see if DEPS[etc] exists => no
+    see of DEPS[lob] exist => no
+    finsihed done!
 */
 
