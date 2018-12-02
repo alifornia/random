@@ -7,8 +7,6 @@
 #include <fstream>
 #include <cstdio>
 #include <cstring>
-//#include <experimental/filesystem>
-//#include <filesystem>
 #include <unistd.h>
 
 
@@ -21,9 +19,12 @@
 #include <unordered_set>
 #include <unordered_map>
 
+#define DEPENDENCIES    "DEPENDENCIES"
+#define OWNERS          "OWNERS"
+
 
 using namespace std;
-namespace po = boost::program_options; //using namespace boost;
+namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
 
@@ -36,13 +37,6 @@ ostream& operator<<(ostream& os, const vector<T>& v){ // print util CMT laterrr
 //g++ -std=c++17  TwitterCodebaseApprovalSystem.cpp -I ~/Downloads/boost_1_68_0/Program/include/boost-1_68/ -L ~/Downloads/boost_1_68_0/Program/lib/ -lboost_program_options-mgw81-mt-d-x32-1_68
 //g++ -std=c++17  TwitterCodebaseApprovalSystem.cpp -I C\:/Program\ Files/boost/include/boost-1_68  -L C\:/Program\ Files/boost/lib -lboost_program_options-mgw81-mt-d-x32-1_68 -lboost_filesystem-mgw81-mt-d-x32-1_68 -lboost_system-mgw81-mt-d-x32-1_68
 
-typedef vector<string> slist;
-
-class Dir{
-    public: 
-    string dir_name;
-    slist dir_owners; 
-};//maybe! instead of { {DIRy,OWNy1, OWNy2} ===> unordered_map <Dir , Dir > dependencies2; 
 
 
 class TwitterCodebaseApprovalSystem{
@@ -53,31 +47,22 @@ private:
     vector<string> changed_files;
 
     vector<string> required_approvals;
-    //unordered_map <string , vector< pair< string, vector<string> > > > dependencies; //DEP[DIRx] = { (DIRy,{OWNy1, OWNy2}) , (DIRz,{OWNz1}) ,... }  
-    //instead DEP[DIRx] = { {DIRy,OWNy1, OWNy2} , {DIRz,OWNz1} ,... }  assume the first one is always direcotry and the rest is owners
-    //unordered_map gets confused by pair or you shouls define a hash function
-    unordered_map <string , vector< vector<string> > > dependencies;
-    //unordered_map <Dir , Dir> dependencies2; 
+    unordered_map<string , vector<string> > dir_owners;
+    unordered_map<string , vector<string> > dir_dependencies;
+
  
-    //unordered_set < vector<string> > affected_dirs_owners;
-
     void process_program_options(const int ac, const char *const av[]);
-
     void get_dependecies();
+    void get_owners();
 
-    vector<string> get_dirs_and_owners(fs::path dir_path);
-    //unordered_map<string, vector<string>> get_required_approvals();
-    unordered_map<string, vector<string> , vector<string> > index_dirs(); //owners maybe make a classss?~!?!!
+    void dir_indexing(fs::path dir_path);
 public:
     TwitterCodebaseApprovalSystem(int argc, char** argv){
         process_program_options(argc, argv);
-        //check if files are valid
         repo_path=(fs::current_path()).string();    //cout << fs::system_complete(argv[0]) << endl;
         cout << repo_path << endl;
         // shoudl be this (because one may run the command in a different directory): repo_path=(changed_files[0] - fs::current_path()).string();    //cout << fs::system_complete(argv[0]) << endl;
-        cout << "GET DPS" << endl;
         get_dependecies();
-        cout << "GET DPS" << endl;
         for(const auto& dep : dependencies){
             cout << dep.first << " APPEARED IN: " << endl;
             for(const auto& d_a_o: dep.second)
@@ -116,15 +101,9 @@ void TwitterCodebaseApprovalSystem::process_program_options(const int ac, const 
 void TwitterCodebaseApprovalSystem::get_dependecies(){
     string dir_path;
     string line;
-    //pair<string, vector<string> > dirs_and_owners;
     vector<string> dirs_and_owners;
-    //DO theseee: string dep_file_name; fs::path dep_file_path;
     for ( fs::recursive_directory_iterator end, dir("./"); dir != end; ++dir ) {
         if( fs::is_regular_file( (dir.status())) ){ // dir=/etc/DEP 
-            /************************22222222*********************
-             if(changed_file_set[dir->path()] exist ){//if this file is the se of cahnged_path  
-                    remove from the set  }
-            *********************************************/
             if( dir->path().filename() == "DEPENDENCIES"){//cout << dir->path().filename() << endl; //std::cout << *dir << "\n";  // full path
                 fs::ifstream file(dir->path()); // DEP contians /src
                 cout << *dir << "\n";
@@ -138,17 +117,10 @@ void TwitterCodebaseApprovalSystem::get_dependecies(){
                 
 
                 while(getline(file, line)){
-                    //cout << line << ":: " << endl;
                     unordered_map<string, vector<vector<string> >>::const_iterator got = dependencies.find (line);
 
-                    if(got != dependencies.end()){ // if exist
-                        //cout << "EXIST" << endl;
+                    if(got != dependencies.end()){
                         dependencies[line].push_back(dirs_and_owners);
-                        /************************3333*********************
-                         dependencies.insert( {dir->path , SHOULD NOT BE dirs_and_owners of line???} );
-                        *********************************************/
-
-                        //got->second.push_back(dirs_and_owners);
                     }
                     else{
                         //cout << "NOT EXIST" << endl;
@@ -159,34 +131,6 @@ void TwitterCodebaseApprovalSystem::get_dependecies(){
                     }//fisr chech exist or not exist order performace???
                 }
             }
-            //is in changed_file list , 
-            //basically, there might be some file that are chaging but nobody depends on them
-            //so never been added to depdendecies list,
-            //since I donot have a sperate hash for owners for better performance (single hash) and  SPACE
-            //and I want to get owner and deps in one hash search (not imporant honestly) but in terms of insersion
-            //two insert in two hash, the performance is worse cause of resizing hash, rehasihng, two collision and etc...
-            //SO I also need to add those changed_files that never been in list to make sure when I'm getting owners
-            //(since I'm using dep and owner in one hash) I have them also.
-            //I"m storing only owner and deps of depening or chaging files. DONE no extra 
-            //having two hashesh for deps and owners result same order of time coomplexity but two hasshin is more expensive than one
-            /// you maye say the hash function migh tbe slower but
-            //test! also less conflict as the keys-values are more unique, confirmed.... too long story
-            
-
-            //ITHINK EVRYTHING ABOVE IS too much why? you can easily find and add the owner of chaged files
-            // the above is good if you change all the owner in dependecies
-            //basically you add everything, again check everyone to find the deps
-            //but if you instead of reading files again and find owners
-            //use instead the DEP hassh, then you traverse once
-            //but BS becasue you still do find in hash == almost equal to == read file??!!!
-            //IDK reading file is slow that's what I know!!! but accesing hash is faster...
-            // --> JUST go and find file that need to be approved one 
-
-            //we don't need to again read owners of changed_file
-            /*************************222222********************
-             if(anything left in change file list ){  
-                    ADDING them to dependencies }
-            *********************************************/
         }
         //std::cout << dir->path().filename() << "\n"; // just last bit
     }
@@ -285,95 +229,6 @@ ONWE={e}
     /test
         /com
             OWNERS={a, b}
-            FILE2
-        /bin
-            FILE1
-
-
-1)  if I change FILE
-    OWNER_HASH
-         test/com   ---->   {a, b}
-    done with initial add
-
-2)  now parse all dirs and find dependecies on intial OWNER HASH 
-    I find "src/com" depens on "test/com"
-    add to hash
-    OWNER_HASH
-         test/com   ---->   {a, b}
-         src/com    ---->   {b, c}
-
-BUG: also "etc" and "lib" depends on "src/com" and must be added but we parser may have passed them already (indexing direction does not help).
-so I have to store all the dependecies which is not space-ideal.
-
-1)  parse all dirs and find all dependecies
-    DEP_HASH
-        src/com     ---->   {etc, lib, }  
-        test/com    ---->   {src/com, }
-2)  now if make owners
-    OWNER_HASH
-        test/com   ---->   {a, b}
-    done with initial add
-    add DEP_HASH[test/com]
-    OWNER_HASH
-        test/com   ---->   {a, b}
-        src/com    ---->   {b, c}
-    add DEP_HASH[src/com]
-    OWNER_HASH
-        test/com   ---->   {a, b}
-        src/com    ---->   {b, c}
-        etc        ---->   {d}
-        lib        ---->   {b}
-
-
-[] vector
-{} pair
-() hassh/ set
-1')  parse all dirs and find all dependecies
-    DEP_HASH
-        src/com    ---->   ( [etc,[d]] , [lib,[b]] , )  
-        test/com   ---->   ( [src/com,[b,c]] , )
-2')  now if make owners (set is enough)
-    add FILE  test/com owners easy => [a,b]
-    OWNER_SET
-        [a, b]
-    DONE
-
-    see if DEP_HASH[test/com] exist => yes => add deps [src/com,[b,c]]
-    OWNER_SET
-        [a, b]
-        [b, c]
-    find 
-    see if DEP_HASH[src/com] exist => yes add deps [etc,[d]] , [lib,[b]]
-    OWNER_SET
-        [a, b]
-        [b, c]
-        [d]
-        [b]
-    see if DEPS[etc] exists => no
-    see of DEPS[lob] exist => no
-    finsihed done!
-
-/repo
-ONWE={e}
-    /usr
-        /root
-            DEP={usr/ali} 
-        /ali
-            OWNER={f}
-    /etc
-        OWNERS={d}
-        DEP={src/com}
-    /lib
-        OWNER={b}
-        DEP={src/com}
-    /src
-        /com
-            OWNERS={b, c}
-            DEP={test/com}    
-    /test
-        /com
-            OWNERS={a, b}
-            DEP={usr/ali}
             FILE2
         /bin
             FILE1

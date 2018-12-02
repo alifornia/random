@@ -81,3 +81,30 @@ int main(int argc, char** argv){
     else cout << "Insufficient approvals" << endl;
     return 0;
 }
+
+function(){
+    
+    /dir1
+        OWN={root,usr}
+    /dir2
+        DEP={dir1}
+        OWN={usr}
+
+    unordered_map<string, vector<string>> dir_owners;
+    // /dir1 --> [root, usr]
+    // /dir2 --> [usr]
+    unordered_map<string, vector<string>> dir_dependencies;
+    // /dir1 --> [dir2]
+    
+    unordered_map<string, vector<vector<string>>> dir_owners_and_dependencies;
+    // /dir1 --> [ [/dir1, root, usr] [/dir2, usr] ]
+    // /dir2 --> [ [/dir2, usr] ]
+
+    // I one-time walk through all direcories from "./" 
+    // where each directory has owner and may has dependency files 
+    // and read their content and build hash table(s)
+    
+
+    // Later in this program, I will do some look-up or find() operation to check ownership and dependencies.
+
+}
