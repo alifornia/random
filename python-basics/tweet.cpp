@@ -2,6 +2,8 @@
 #include <iterator>
 #include <string>
 #include <vector>
+#include <stack>
+#include <utility>
 
 #include <iostream>
 #include <fstream>
@@ -54,6 +56,8 @@ private:
     void dir_indexing();
     void get_dir_dependencies(fs::path dir_path);
     void get_dir_owners(fs::path dir_path);
+    vector<string> get_dir_owners2(fs::path dir_path);
+
 
     void find_required_approvals();
 
@@ -90,18 +94,46 @@ void TwitterCodebaseApprovalSystem::process_program_options(const int ac, const 
 
 void TwitterCodebaseApprovalSystem::dir_indexing(){
     string line;
-    fs::path dir_path;
-    //for (auto & dir_it : fs::directory_iterator("./src")){//a level
-    //for ( fs::recursive_directory_iterator end, dir_it("./src"); dir_it != end; ++dir_it ) {
+    fs::path dir_path = ".";//repo
+    vector<string> dir_direct_pwners;
+    stack< pair< string, vector<string> > > dir_stack;
 
-    for ( auto & dir_it : fs::recursive_directory_iterator(".") ) {
-        cout << dir_it << endl;
-        if (fs::is_regular_file( (dir_it.status()))){ 
-            dir_path = dir_it.path();
-            if(dir_path.filename() == DEPENDENCIES_FILE_NAME){
-                get_dir_owners(dir_path);
-                get_dir_dependencies(dir_path);
+    //for (auto & dir_it : fs::directory_iterator("./src")){//a level
+    //for ( fs::recursive_directory_iterator end, dir_it("./"); dir_it != end; ++dir_it ) {
+    dir_direct_pwners = get_dir_owners2(dir_path);
+    dir_stack.push({dir_path.string(), dir_direct_pwners});
+
+    while(!dir_stack.empty()){//DFS
+        dir_path = dir_stack.top().first;
+        dir_direct_pwners = dir_stack.top().second;
+        dir_stack.pop();
+        for ( auto & dir_it : fs::recursive_directory_iterator(dir_path) ) {  //cout << dir_it.level() << endl;
+            if (fs::is_regular_file( (dir_it.status()))){ 
+                dir_path = dir_it.path();
+                if(dir_it.path().filename() == OWNERS_FILE_NAME){
+                    cout << "OWN: " << dir_it << endl;
+                    /*dir_direct_pwners = get_dir_owners2(dir_it.path().parent_path());
+                    if(!dir_direct_pwners.empty()){
+                        dir_stack.push({dir_it.path().string(), dir_direct_pwners});
+                        cout << dir_direct_pwners;
+                    }
+                    cout << endl;*/
+                }
+                else if (dir_path.filename() == DEPENDENCIES_FILE_NAME){
+                    cout << "DEP: " << dir_it << endl;
+                }
+                else{
+                    continue;
+                }
             }
+            
+            /*if (fs::is_regular_file( (dir_it.status()))){ 
+                dir_path = dir_it.path();
+                if(dir_path.filename() == DEPENDENCIES_FILE_NAME){
+                    get_dir_owners(dir_path);
+                    get_dir_dependencies(dir_path);
+                }
+            }*/
         }
     }
     /*cout << "DEBUG BEGIN OWN" << endl;
@@ -123,6 +155,17 @@ void TwitterCodebaseApprovalSystem::dir_indexing(){
     cout << "DEBUG  END DEP" << endl;*/
 }
 
+vector<string> TwitterCodebaseApprovalSystem::get_dir_owners2(fs::path dir_path){
+        string line;
+        vector<string> dir_direct_owners;
+        fs::path owner_file = dir_path;
+        if( fs::exists(owner_file/OWNERS_FILE_NAME) ){
+            fs::ifstream file(owner_file/OWNERS_FILE_NAME);
+            while(getline(file, line))
+                dir_direct_owners.push_back(line);
+        }
+        return dir_direct_owners;
+}
 
 void TwitterCodebaseApprovalSystem::get_dir_owners(fs::path dir_path){
     if(dir_owners.find(dir_path.parent_path().string()) == dir_owners.end()){//needed for saving lots of space by not storing owners of file not required , maybe better to have find_dir_owner and call get_dir_owner if needed
