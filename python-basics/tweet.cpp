@@ -19,8 +19,8 @@
 #include <unordered_set>
 #include <unordered_map>
 
-#define DEPENDENCIES    "DEPENDENCIES"
-#define OWNERS          "OWNERS"
+#define DEPENDENCIES_FILE_NAME    "DEPENDENCIES"
+#define OWNERS_FILE_NAME          "OWNERS"
 
 
 using namespace std;
@@ -34,9 +34,7 @@ ostream& operator<<(ostream& os, const vector<T>& v){ // print util CMT laterrr
     return os;
 }
 
-//g++ -std=c++17  TwitterCodebaseApprovalSystem.cpp -I ~/Downloads/boost_1_68_0/Program/include/boost-1_68/ -L ~/Downloads/boost_1_68_0/Program/lib/ -lboost_program_options-mgw81-mt-d-x32-1_68
-//g++ -std=c++17  TwitterCodebaseApprovalSystem.cpp -I C\:/Program\ Files/boost/include/boost-1_68  -L C\:/Program\ Files/boost/lib -lboost_program_options-mgw81-mt-d-x32-1_68 -lboost_filesystem-mgw81-mt-d-x32-1_68 -lboost_system-mgw81-mt-d-x32-1_68
-
+//g++ -std=c++1z tweet.cpp -l boost_program_options -l boost_system -l boost_filesystem
 
 
 class TwitterCodebaseApprovalSystem{
@@ -49,26 +47,20 @@ private:
     vector<string> required_approvals;
     unordered_map<string , vector<string> > dir_owners;
     unordered_map<string , vector<string> > dir_dependencies;
-
  
     void process_program_options(const int ac, const char *const av[]);
-    void get_dependecies();
-    void get_owners();
+    void get_dir_dependencies(fs::path dir_path);
+    void get_dir_owners(fs::path dir_path);
 
-    void dir_indexing(fs::path dir_path);
+    void dir_indexing();
+
 public:
     TwitterCodebaseApprovalSystem(int argc, char** argv){
         process_program_options(argc, argv);
-        repo_path=(fs::current_path()).string();    //cout << fs::system_complete(argv[0]) << endl;
+        repo_path=(fs::current_path()).string();
         cout << repo_path << endl;
         // shoudl be this (because one may run the command in a different directory): repo_path=(changed_files[0] - fs::current_path()).string();    //cout << fs::system_complete(argv[0]) << endl;
-        get_dependecies();
-        for(const auto& dep : dependencies){
-            cout << dep.first << " APPEARED IN: " << endl;
-            for(const auto& d_a_o: dep.second)
-                cout <<  d_a_o << endl;
-        }
-        cout << "GET DPS" << endl;
+        dir_indexing();
     }
     bool is_approved();
 };
@@ -98,66 +90,70 @@ void TwitterCodebaseApprovalSystem::process_program_options(const int ac, const 
 
 }
 
-void TwitterCodebaseApprovalSystem::get_dependecies(){
-    string dir_path;
+void TwitterCodebaseApprovalSystem::dir_indexing(){
     string line;
-    vector<string> dirs_and_owners;
-    for ( fs::recursive_directory_iterator end, dir("./"); dir != end; ++dir ) {
-        if( fs::is_regular_file( (dir.status())) ){ // dir=/etc/DEP 
-            if( dir->path().filename() == "DEPENDENCIES"){//cout << dir->path().filename() << endl; //std::cout << *dir << "\n";  // full path
-                fs::ifstream file(dir->path()); // DEP contians /src
-                cout << *dir << "\n";
-                //dirs_and_owners =  {dir->path().parent_path().string() , get_owners(dir->path())} ; // / {etc, [d] }
-                dirs_and_owners = get_dirs_and_owners(dir->path().parent_path());
-                //cout << dirs_and_owners << endl;
-                
-                /************************111111*********************
-                 dependencies.insert( {dir->path , get_dirs_and_owners(dir->path().parent_path())} );
-                *********************************************/
-                
-
-                while(getline(file, line)){
-                    unordered_map<string, vector<vector<string> >>::const_iterator got = dependencies.find (line);
-
-                    if(got != dependencies.end()){
-                        dependencies[line].push_back(dirs_and_owners);
-                    }
-                    else{
-                        //cout << "NOT EXIST" << endl;
-                        vector<vector<string> > new_dirs_and_owners={dirs_and_owners};
-                        dependencies.insert( {line , new_dirs_and_owners} ); // { /src --> {etc, [d] } }
-                        //dependencies.first = line;
-                        //dependencies.second.push_back(dirs_and_owners);
-                    }//fisr chech exist or not exist order performace???
-                }
+    for ( fs::recursive_directory_iterator end, dir_path("./"); dir_path != end; ++dir_path ) {
+        //cout << *dir_path << endl;
+        if (fs::is_regular_file( (dir_path.status()))){ 
+            if(dir_path->path().filename() == DEPENDENCIES_FILE_NAME){
+                get_dir_owners(dir_path->path().parent_path());
+                //get_dir_dependencies(dir_path->path().parent_path());
             }
         }
-        //std::cout << dir->path().filename() << "\n"; // just last bit
     }
-
-    if ( fs::is_regular_file(fs::status(dir_path+"/DEPENDENCIES")) ) //windowsssss
-        cout << "yes" << endl;
-
-    //read DEPS file if exist add to dependencies
+    cout << "BEGIN" << endl;
+    for(const auto& dep : dir_dependencies){
+        cout << dep.first << " APPEARED IN: " << endl;
+        for(const auto& d_a_o: dep.second)
+            cout <<  d_a_o << endl;
+    }
+    cout << "END" << endl;
+}
+void TwitterCodebaseApprovalSystem::get_dir_dependencies(fs::path dir_path){
+    string line;
+    string dir_path_string = dir_path.string();
+    fs::ifstream file(dir_path);
+    //cout << dir_path.string() << endl;
+    while(getline(file, line)){
+        unordered_map<string, vector<string> >::const_iterator got = dir_dependencies.find(line);
+        if(got != dir_dependencies.end()){
+            dir_dependencies[line].push_back(dir_path_string);
+        }
+        else{
+            dir_dependencies[line].push_back(dir_path_string);
+            //dir_dependencies[line] = dir_path_string;
+            //dir_dependencies.insert({line, dir_path_string}); // { /src --> {etc, [d] } }
+        }
+    }
 }
 
-vector<string> TwitterCodebaseApprovalSystem::get_dirs_and_owners(fs::path dir_path){
-    vector<string> dirs_and_owners;
-    dirs_and_owners.push_back(dir_path.string()); // add the dir to the first elemt and then owner to avoid using pair BETTER PERFOMACE
+void TwitterCodebaseApprovalSystem::get_dir_owners(fs::path dir_path){
     string line;
     fs::path owner_file = dir_path;
-    owner_file /="OWNERS";
-    while(!fs::exists(owner_file)){//maybe bottom up is a bit better so that I can find all the owner all the way to parent but for sisters dirs I have to go back again.
-    //it is the matter of if exists is fast or checking the exitence in hash
+    string dir_path_string = dir_path.string();
+    fs::path debug_dir_path = dir_path;
+    //cout << dir_path.string() << endl;
+    owner_file /= OWNERS_FILE_NAME;
+    while( !fs::exists(owner_file) ){
         dir_path = dir_path.parent_path();
         owner_file = dir_path;
-        owner_file /="OWNERS";
+        owner_file /= OWNERS_FILE_NAME;
     }
-    fs::ifstream file(owner_file); // DEP contians /src       
+    cout << "DEBUG" << endl;
+    cout << owner_file << " of " << debug_dir_path << endl;
+    fs::ifstream file(owner_file);
     while(getline(file, line)){
-        dirs_and_owners.push_back(line);
+        unordered_map<string, vector<string> >::const_iterator got = dir_owners.find(line);
+        if(got != dir_owners.end()){
+            dir_owners[dir_path_string].push_back(line);
+        }
+        else{
+            //vector<string> new_dirs_and_owners={dirs_and_owners};
+            dir_owners[dir_path_string].push_back(line);
+            //dir_owners[dir_path_string] = line;
+            //dir_owners.insert({dir_path_string , line});
+        }  
     }
-    return dirs_and_owners;
 }
 
 
