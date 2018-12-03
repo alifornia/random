@@ -107,7 +107,10 @@ void TwitterCodebaseApprovalSystem::dir_indexing(){
         dir_path = dir_stack.top().first;
         dir_direct_pwners = dir_stack.top().second;
         dir_stack.pop();
+
         for ( auto & dir_it : fs::recursive_directory_iterator(dir_path) ) {  //cout << dir_it.level() << endl;
+            dir_direct_pwners = get_dir_owners2(dir_path);
+
             if (fs::is_regular_file( (dir_it.status()))){ 
                 dir_path = dir_it.path();
                 if(dir_it.path().filename() == OWNERS_FILE_NAME){
@@ -189,22 +192,22 @@ void TwitterCodebaseApprovalSystem::get_dir_dependencies(fs::path dir_path){
 void TwitterCodebaseApprovalSystem::find_required_approvals(){
     for(const auto& changed_file : changed_files){
         get_dir_owners(fs::path("./"+changed_file));
-        cout << changed_file << "::OWN:: " << dir_owners["./"+fs::path(changed_file).parent_path().string()] << endl;
-        cout << changed_file << "::DEP:: " << dir_dependencies[fs::path(changed_file).parent_path().string()] << endl;
+        //cout << changed_file << "::OWN:: " << dir_owners["./"+fs::path(changed_file).parent_path().string()] << endl;
+        //cout << changed_file << "::DEP:: " << dir_dependencies[fs::path(changed_file).parent_path().string()] << endl;
 
         for(const auto & dir_direct_owner : dir_owners["./"+fs::path(changed_file).parent_path().string()]){
             required_approvals.insert(dir_direct_owner);
         }
         for(const auto & dir_dep :  dir_dependencies[fs::path(changed_file).parent_path().string()]){
-            cout << "DEBUGGGGGG" << endl;
+            //cout << "DEBUGGGGGG" << endl;
             for(const auto & dir_indirect_owner : dir_owners[dir_dep])
                 required_approvals.insert( dir_indirect_owner);
         }
     }
-    cout << "DEBUG BEGIN REQUIRED APPROVAL" << endl;
+    /*cout << "DEBUG BEGIN REQUIRED APPROVAL" << endl;
     for(const auto& ra : required_approvals)
             cout <<  ra << ", ";
-    cout << "\nDEBUG  END REQUIRED APPROVAL" << endl;
+    cout << "\nDEBUG  END REQUIRED APPROVAL" << endl;*/
 }
 
 bool TwitterCodebaseApprovalSystem::is_approved(){
