@@ -44,15 +44,18 @@ private:
     vector<string> approvers;
     vector<string> changed_files;
 
-    vector<string> required_approvals;
-    unordered_map<string , vector<string> > dir_owners;
+    unordered_map<string , vector<string> > dir_owners; //better way to not store the whole path, maybe "relitive to paret..." using a patricia, radix tree
     unordered_map<string , vector<string> > dir_dependencies;
+
+    unordered_set<string> required_approvals; // DONT NEED TO STORE ALL THE DIR PATH ... PREFIX ...... STRING ...
  
     void process_program_options(const int ac, const char *const av[]);
+
+    void dir_indexing();
     void get_dir_dependencies(fs::path dir_path);
     void get_dir_owners(fs::path dir_path);
 
-    void dir_indexing();
+    void find_required_approvals();
 
 public:
     TwitterCodebaseApprovalSystem(int argc, char** argv){
@@ -70,10 +73,7 @@ void TwitterCodebaseApprovalSystem::process_program_options(const int ac, const 
     desc.add_options()
         ("help,h", "produce help message")
         ("approvers,a", po::value(&approvers)->multitoken(), "List of approvers")
-        ("changed-files,c", po::value(&changed_files)->multitoken(), "List of changed files"); 
-        /////////////// changed it as it says on the question
-        ///////Both flags arguments are comma separated.
-        ///////////////////////////////////////////////
+        ("changed-files,c", po::value(&changed_files)->multitoken(), "List of changed files"); //change to comma seperated!!!!!1
     try
     {
         po::variables_map vm;
@@ -86,111 +86,96 @@ void TwitterCodebaseApprovalSystem::process_program_options(const int ac, const 
         exit( EXIT_FAILURE );
     }
     cout << "Approveres: " << approvers << " | Changed files: " << changed_files << endl; 
-    //FASTERRRR??? IDK cout << vm["changed-files"].as< vector<string> >();
-
 }
 
 void TwitterCodebaseApprovalSystem::dir_indexing(){
     string line;
-    for ( fs::recursive_directory_iterator end, dir_path("./"); dir_path != end; ++dir_path ) {
-        //cout << *dir_path << endl;
-        if (fs::is_regular_file( (dir_path.status()))){ 
-            if(dir_path->path().filename() == DEPENDENCIES_FILE_NAME){
-                get_dir_owners(dir_path->path().parent_path());
-                //get_dir_dependencies(dir_path->path().parent_path());
+    fs::path dir_path;
+    //for (auto & dir_it : fs::directory_iterator("./src")){//a level
+    //for ( fs::recursive_directory_iterator end, dir_it("./src"); dir_it != end; ++dir_it ) {
+
+    for ( auto & dir_it : fs::recursive_directory_iterator(".") ) {
+        cout << dir_it << endl;
+        if (fs::is_regular_file( (dir_it.status()))){ 
+            dir_path = dir_it.path();
+            if(dir_path.filename() == DEPENDENCIES_FILE_NAME){
+                get_dir_owners(dir_path);
+                get_dir_dependencies(dir_path);
             }
         }
     }
-    cout << "BEGIN" << endl;
+    /*cout << "DEBUG BEGIN OWN" << endl;
+    for(const auto& own : dir_owners){
+        cout << "[" << own.first << "]={";
+        for(const auto& d_o: own.second)
+            cout <<  d_o << ", ";
+        cout << "}\n";
+    }
+    cout << "DEBUG  END OWN" << endl;
+
+    cout << "DEBUG BEGIN DEP" << endl;
     for(const auto& dep : dir_dependencies){
-        cout << dep.first << " APPEARED IN: " << endl;
-        for(const auto& d_a_o: dep.second)
-            cout <<  d_a_o << endl;
+        cout << "[" << dep.first << "]={";
+        for(const auto& d_d: dep.second)
+            cout <<  d_d << ", ";
+        cout << "}\n";
     }
-    cout << "END" << endl;
+    cout << "DEBUG  END DEP" << endl;*/
 }
-void TwitterCodebaseApprovalSystem::get_dir_dependencies(fs::path dir_path){
-    string line;
-    string dir_path_string = dir_path.string();
-    fs::ifstream file(dir_path);
-    //cout << dir_path.string() << endl;
-    while(getline(file, line)){
-        unordered_map<string, vector<string> >::const_iterator got = dir_dependencies.find(line);
-        if(got != dir_dependencies.end()){
-            dir_dependencies[line].push_back(dir_path_string);
-        }
-        else{
-            dir_dependencies[line].push_back(dir_path_string);
-            //dir_dependencies[line] = dir_path_string;
-            //dir_dependencies.insert({line, dir_path_string}); // { /src --> {etc, [d] } }
-        }
-    }
-}
+
 
 void TwitterCodebaseApprovalSystem::get_dir_owners(fs::path dir_path){
-    string line;
-    fs::path owner_file = dir_path;
-    string dir_path_string = dir_path.string();
-    fs::path debug_dir_path = dir_path;
-    //cout << dir_path.string() << endl;
-    owner_file /= OWNERS_FILE_NAME;
-    while( !fs::exists(owner_file) ){
-        dir_path = dir_path.parent_path();
-        owner_file = dir_path;
-        owner_file /= OWNERS_FILE_NAME;
-    }
-    cout << "DEBUG" << endl;
-    cout << owner_file << " of " << debug_dir_path << endl;
-    fs::ifstream file(owner_file);
-    while(getline(file, line)){
-        unordered_map<string, vector<string> >::const_iterator got = dir_owners.find(line);
-        if(got != dir_owners.end()){
-            dir_owners[dir_path_string].push_back(line);
-        }
-        else{
-            //vector<string> new_dirs_and_owners={dirs_and_owners};
-            dir_owners[dir_path_string].push_back(line);
-            //dir_owners[dir_path_string] = line;
-            //dir_owners.insert({dir_path_string , line});
-        }  
+    if(dir_owners.find(dir_path.parent_path().string()) == dir_owners.end()){//needed for saving lots of space by not storing owners of file not required , maybe better to have find_dir_owner and call get_dir_owner if needed
+        string line;
+        fs::path owner_file = dir_path.parent_path();
+        while( !fs::exists(owner_file/OWNERS_FILE_NAME) )
+            owner_file = owner_file.parent_path();
+        fs::ifstream file(owner_file/OWNERS_FILE_NAME);
+        while(getline(file, line))
+            dir_owners[dir_path.parent_path().string()].push_back(line);
     }
 }
 
+void TwitterCodebaseApprovalSystem::get_dir_dependencies(fs::path dir_path){
+    string line;
+    fs::ifstream file(dir_path);
+    while(getline(file, line))
+        dir_dependencies[line].push_back(dir_path.parent_path().string());
+}
+
+void TwitterCodebaseApprovalSystem::find_required_approvals(){
+    for(const auto& changed_file : changed_files){
+        get_dir_owners(fs::path("./"+changed_file));
+        cout << changed_file << "::OWN:: " << dir_owners["./"+fs::path(changed_file).parent_path().string()] << endl;
+        cout << changed_file << "::DEP:: " << dir_dependencies[fs::path(changed_file).parent_path().string()] << endl;
+
+        for(const auto & dir_direct_owner : dir_owners["./"+fs::path(changed_file).parent_path().string()]){
+            required_approvals.insert(dir_direct_owner);
+        }
+        for(const auto & dir_dep :  dir_dependencies[fs::path(changed_file).parent_path().string()]){
+            cout << "DEBUGGGGGG" << endl;
+            for(const auto & dir_indirect_owner : dir_owners[dir_dep])
+                required_approvals.insert( dir_indirect_owner);
+        }
+    }
+    cout << "DEBUG BEGIN REQUIRED APPROVAL" << endl;
+    for(const auto& ra : required_approvals)
+            cout <<  ra << ", ";
+    cout << "\nDEBUG  END REQUIRED APPROVAL" << endl;
+}
 
 bool TwitterCodebaseApprovalSystem::is_approved(){
-    if(required_approvals == approvers) //handle order!!!! == is fast but NO ORDER
-        return true;
+    find_required_approvals();
+    //if(required_approvals == approvers) //handle order!!!! == is fast but NO ORDER
+    //    return true;
     return false;
 }
 int main(int argc, char** argv){
-    //string pp1 = (std::experimental::filesystem::current_path()).sring()+"asdasd";
-
-    string pp1 = (fs::current_path()).string()+"/OWNERS";
-
-    //string pp2 = (fs::current_path()).string()+"asdasd";
-    cout << pp1 << endl;
-
-    //if ( std::filesystem::exists(std::filesystem::status(pp)) && !std::filesystem::is_directory(std::filesystem::status(pp)) ); //windowsssss
-    //if ( std::experimental::filesystem::exists(std::experimental::filesystem::status(pp)) && !std::experimental::filesystem::is_directory(std::experimental::filesystem::status(pp)) ); //windowsssss
-    
-    if (fs::exists(fs::status(pp1)) && !fs::is_directory(fs::status(pp1)) )
-        cout << "yes" << endl;
 
     TwitterCodebaseApprovalSystem app(argc, argv);
     if(app.is_approved())
         cout << "Approved" << endl;
     else cout << "Insufficient approvals" << endl;
-
-
-    unordered_map<string, vector<string>> dir_ownerss;
-    // /dir1 --> [root, usr]
-    // /dir2 --> [usr]
-    unordered_map<string, vector<string>> dir_dependenciess;
-    // /dir1 --> [dir2]
-    
-    unordered_map<string, vector<vector<string>>> dir_owners_and_dependenciess;
-    // /dir1 --> [ [/dir1, root, usr] [/dir2, usr] ]
-    // /dir2 --> [ [/dir2, usr] ]
 
     return 0;
 }
