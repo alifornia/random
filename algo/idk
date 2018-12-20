@@ -1,0 +1,103 @@
+/******************************************************************************
+
+                              Online C++ Compiler.
+               Code, Compile, Run and Debug C++ program online.
+Write your code in this editor and press "Run" button to compile and execute it.
+
+*******************************************************************************/
+
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <queue>
+
+using namespace std;
+
+typedef unordered_map<int,bool> hash_ib;
+
+class Node{
+    public:
+    int id;
+    Node(int id_):id(id_){}
+    //Node(const Node& rhs){}
+    vector<Node&> childs;
+};
+
+class Graph{
+    public:
+    int v;
+    int e;
+    Graph():v(0),e(0){}
+    vector<Node> roots;
+    void BFSi();
+    void BFSr();
+};
+
+void Graph::BFSi(){
+    /*for(auto & root : roots){
+        queue<Node> q;
+        vector<bool> visited(v, false);
+
+        q.push(root);
+        visited[root.id]=true;
+
+        while(!q.empty()){
+            Node roott = q.front();
+            cout << "root: " << roott.id << endl;
+            cout << "size: " << q.front().childs.size() << endl;
+            q.pop();
+            for(auto & child : roott.childs){
+                cout << "child: " << child.id << endl;
+                if(!visited[child.id]){
+                    visited[child.id]=true;
+                    q.push(child);
+                }
+            }
+        }
+    }*/
+}
+/*
+
+0-1\
+| | 4
+2-3/
+
+*/
+
+vector<vector<int>> g;
+
+void BFS(vector<vector<int>> &g){
+
+}
+
+int main()
+{
+    Node node0(0), node1(1), node2(2), node3(3), node4(4);
+
+    //node0.childs={node1, node2};
+    node0.childs.push_back(node1);
+    node0.childs.push_back(node2);
+
+    //node1.childs={node0, node3, node4};
+    node1.childs.push_back(node0);
+    node1.childs.push_back(node3);
+    node1.childs.push_back(node4);
+
+    //node2.childs={node0, node3};
+    node2.childs.push_back(node0);
+    node2.childs.push_back(node3);
+
+    //cout << "siddze: " << node0.childs[0].childs[2].id << endl;
+
+    //node3.childs={node1, node2, node4};
+    //node4.childs={node1, node3};
+
+    Graph G;
+    G.v=5;
+    G.e=6;
+
+    //G.roots={node0};
+    //G.BFSi();
+
+    return 0;
+}

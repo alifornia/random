@@ -1,0 +1,69 @@
+# Twest: TwitterCodebaseApprovalSystem
+
+## Requirement: 
+    C++ 1z on mac or C++11x on linux, 
+    g++
+    boost (1.88.0)
+
+## Build:
+	Mac OS:
+    ```bash
+	g++ -std=c++1z twest.cpp -l boost_program_options -l boost_system -l boost_filesystem
+    ```
+	Linux:
+    ```bash
+	g++ -std=c++17 twest.cpp -l boost_program_options -l boost_system -l boost_filesystem
+    ```
+
+## Run *:
+    ```bash
+    ./a.out --approvers alovelace ghopper --changed-files src/com/twitter/follow/Follow.java src/com/twitter/user/User.java
+    ```
+
+* I tried multiple ways to change the default program options from space separated to comma separated. It is getting me headache and took a lot of my time. I gave up on it for the sake of time.
+
+## Possibe improvement
+There is absolutely room to improve my implementation in terms of space and time and I’d like to mention some remarks regarding them:
+
+## Indexing File System (Directories and Files):
+-	Reusability: If had more time, I’d design an indexing mechanism (incl. store and update) which walk through the repo minimally (one-time unless an update in structure occurs). I’d store the whole structure locally in a file or in a database and maintain it optimally if a change (e.g. new dependencies or ownerships happen). Then, I use the stored structure to run multiple queries or commands (i.e. approval checks). 
+-	Radix Tries: Having tree structure and long common prefixed directory paths, make File Systems a good candidate for compressed tries (i.e. radix tries). A very space optimized type of radix trie is called PATRICIA trie where the radix is 2 and allows a highly compressed data structured using the binary representation of nodes (i.e. directory names). Implementing PATRICA trie does not seem to be feasible in 3 hours or perhaps I’m not that fast :|
+
+## Why my implementation using hash table is not bad:
+-	Time complexity: it’s very fast by doing O(1) operations (e.g. look-ups). Order wise, it is even faster than radix tries where the operations may take up to O(k) where k is the maximum path length depending on the radix value and implementation. While hash tables often do better order wise compared to tries, they may suffer from collisions. However, it most likely would not be an issue using a good hash function.
+-	Space complexity: Yes. Keys are sharing long common prefixes and I’m storying lots of them. As I mentioned PATRICA trie is devised for exactly such cases. But my code still does not suck. The reason is, in my code, rather than storing every single directory or file (or nodes in a trie), I’m skipping the intermediate directories (nodes) and I only store OWNERS and DEPENDECIES of directories which are of interests (i.e. they contain dependencies or changed files). Therefore, my hash table is pretty small. 
+-	Implementation Complexity: I walk through the repo directories using DFS and store DEPENDENCIES with their OWNERS (direct or parental). I used C++ Standard and Boost libraries for efficient hash/set data structures and file system operations, respectively. I only traverse once. I avoided any redundancy that could happen. For example if owners of a path are shared between to routes from different changed file, I won’t traverse that path twice and use the stored OWNERS (to avoid redundant I/O operations). I also could possibly manage to obtain OWNERs while I’m walking and  building DEPENDENCIES, but it’s arguable. Because, based on a common sense, OWNERS (engineers), are very less than files. Therefore, I thought, maybe, it is better to obtain owners on-demands, basically whenever they are needed ( we don’t need all of them either). Also, I didn’t combined DEPENDECIES and OWNERS data structure, even though, initially I did (the final code does not have changes). The reason is, even though, it may look I save memory by sharing has keys, but DIPENDNEICES are only an intermediate data for checking approvals. So I don’t even need to store them. Also, DEPENDEICIES cannot be skipped as we don’t know which files depends on what. However, OWNERS can be obtained simple traverse (using DEPs). In addition, there might be lots of DEPENDENCIES that may not be even exercised during an approval checks (other side of the tree). Lots of assumptions can be made, depending on how big, deep the FS is, or how many DEPENDENCIES or OWNERS we have. I used common sense, and implemented the best suited solution for this problem. I’d like to mention again, that if I’d design such approval system for code base in reality, I would probably create all DEPENDECIES and OWNERS and store them once and use them for all approval check or queries. I also tried implementing a PATRICIA trie but I realized it may not be possibly in 3 hours, or perhaps I’m not fast :|  I will do it as my own exercise though.
+
+## Test: 
+I tested my code with many complicated FS structure such as the one below where there are circular dependencies, multi-layer ownerships and etc. I also check some (not all) corner cases where some files are missing and bad formatting. The program, however, can be exercises by a randomized suite of test. Honestly, three hours is not enough for both implementing and testing. I did my best and I hope it is not disappointing. Unfortunately, I spent lots of time on working comma options :( It is very unstandardized. I barely used Google. Everything is my own effort and I hope it is acceptable. 
+
+/repo
+ONWE={e}
+    /usr
+        /root
+            DEP={usr/ali} 
+        /ali
+            OWNER={f}
+    /etc
+        OWNERS={d}
+        DEP={src/com}
+    /lib
+        OWNER={b}
+        DEP={src/com}
+    /src
+        /com
+            OWNERS={b, c}
+            DEP={test/com}    
+    /test
+        /com
+            OWNERS={a, b}
+            DEP={src/com}
+            FILE2
+        /bin
+            FILE1
+
+## License
+[MIT]
+
+## Author
+Ali Abbasinasab
