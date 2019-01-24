@@ -23,28 +23,12 @@ double findMedian(vector<int> &v1, vector<int> &v2)
     int m = 0;
     for (int k = 0; k < vs / 2 + 1; k++)
     {
-        cout << "k=" << k << ": ";
         if (i != v1s && j != v2s)
-        {
-            cout << "1(" << i << "," << j << ") --> ";
-            if (v1[i] < v2[j])
-                m = v1[i++];
-            else
-                m = v2[j++];
-            cout << "1(" << i << "," << j << ") = " << m << endl;
-        }
+            m = (v1[i] < v2[j]) ? v1[i++] : v2[j++];
         else if (i == v1s)
-        {
-            cout << "2(" << i << "," << j << ") --> ";
             m = v2[j++];
-            cout << "2(" << i << "," << j << ") = " << m << endl;
-        }
         else if (j == v2s)
-        {
-            cout << "3(" << i << "," << j << ") --> ";
             m = v1[i++];
-            cout << "3(" << i << "," << j << ") = " << m << endl;
-        }
         med[0] = med[1];
         med[1] = m;
     }
