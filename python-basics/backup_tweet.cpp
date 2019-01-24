@@ -253,6 +253,7 @@ ONWE={e}
     /test
         /com
             OWNERS={a, b}
+            DEP={src/com}
             FILE2
         /bin
             FILE1
