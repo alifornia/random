@@ -17,11 +17,10 @@ def sig(prem, template, th):
         if template[i]+prem[j] in dna_match:
             print 'if'
             sig = 1
-            while(template[i+1] and template[i] == template[i+1]):
-                if sig < th:
-                    print 'if th'
-                    i += 1
-                    sig += 1
+            while(template[i+1] and template[i] == template[i+1] and sig < th):
+                print 'if th'
+                i += 1
+                sig += 1
         j += 1
         i += 1
         print('sig =', sig)
