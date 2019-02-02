@@ -4,7 +4,7 @@
 dna_match = ['CG', 'GC', 'AT', 'TA']
 
 
-def sig(prem, template):
+def sig(prem, template, th):
     l = len(template)
     ll = len(prem)
     i = j = 0
@@ -18,8 +18,10 @@ def sig(prem, template):
             print 'if'
             sig = 1
             while(template[i+1] and template[i] == template[i+1]):
-                i += 1
-                sig += 1
+                if sig < th:
+                    print 'if th'
+                    i += 1
+                    sig += 1
         j += 1
         i += 1
         print('sig =', sig)
@@ -30,7 +32,7 @@ def main():
     prem = 'ACTGAAGGACTG'
     template = 'TCAATTTTTTGCAGGCAT'
     print 'working'
-    sig(prem, template)
+    sig(prem, template, 3)
 
 
 if __name__ == "__main__":
