@@ -22,10 +22,10 @@ def sig(prem, template, threshold):
 
 
 def main():
-    prem = 'ACTGAAGGACTG'
-    template = 'TCAATTTTTTGCAGGCAT'
-    print 'working'
-    sig(prem, template, 3)
+    prem = "ACTGAAGGACTG"
+    template = "TCAATTTTTTGCAGGCAT"
+    threshold = 3
+    sig(prem, template, threshold)
 
 
 if __name__ == "__main__":
