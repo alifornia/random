@@ -1,5 +1,5 @@
 //const
-const name='Ali Abbasinasab';
+const name = 'Ali Abbasinasab';
 
 //variable
 let greating = 'Yo ';
@@ -22,7 +22,7 @@ console.log(person.name);
 
 //person[name] = 'Allie';
 let property = 'name';
-person[property]= 'Allie'; 
+person[property] = 'Allie';
 console.log(person.name);
 
 //array
@@ -33,12 +33,12 @@ console.log(colors);
 console.log(colors.length);
 
 //function
-function greet(name = 'Alex'){
+function greet(name = 'Alex') {
     console.log('Yo ' + name);
 }
 
-function square(number){
-    return number*number;
+function square(number) {
+    return number * number;
 }
 
 greet();
@@ -55,35 +55,35 @@ document.getElementById('templateid').innerHTML = template;
 */
 
 //OO
-class User{
-    constructor(username, email, password){
+class User {
+    constructor(username, email, password) {
         this.username = username;
         this.email = email;
         this.password = password;
     }
-    regirster(){
+    regirster() {
         console.log(this.username + ' is registered');
     }
-    static countUsers(){
+    static countUsers() {
         console.log('There are 50 users');
     }
 }
 
-let bob =  new User('bob', 'bob@eemail.com', 'notlikethisreallife');
+let bob = new User('bob', 'bob@eemail.com', 'notlikethisreallife');
 bob.regirster();
 User.countUsers();
 
-class Member extends User{
-    constructor(username, email, password, memberPackage){
+class Member extends User {
+    constructor(username, email, password, memberPackage) {
         super(username, email, password);
         this.memberPackage = memberPackage;
     }
-    getPackage(){
-        console.log(this.username + ' is subscribed to '+ this.memberPackage + ' package');
+    getPackage() {
+        console.log(this.username + ' is subscribed to ' + this.memberPackage + ' package');
     }
 }
 
-let bobm = new Member('Bobm', 'bobm@gmail.com' , 'notreal', 'vip');
+let bobm = new Member('Bobm', 'bobm@gmail.com', 'notreal', 'vip');
 bobm.regirster();
 bobm.getPackage();
 
