@@ -1,6 +1,8 @@
 # C-G
 # A-T
 
+dna_match = ['CG', 'GC', 'AT', 'TA']
+
 
 def sig(prem, template):
     l = len(template)
@@ -10,7 +12,8 @@ def sig(prem, template):
     while(l-i and ll-j):
         sig = 0
         print template[i]+prem[j]
-
+        if template[i]+prem[j] in dna_match:
+            print 'if'
         j += 1
         i += 1
         print('sig =', sig)
@@ -19,7 +22,7 @@ def sig(prem, template):
 
 def main():
     prem = 'ACTGGGGCTA'
-    template = 'CCCTTTACCGATCA'
+    template = 'TCCCTTTACCGATCA'
     print 'working'
     sig(prem, template)
 
