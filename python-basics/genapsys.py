@@ -15,8 +15,8 @@ def sig(prem, template, threshold):
             while(template[i+1] and template[i] == template[i+1] and sig < threshold):
                 i += 1
                 sig += 1
+            i += 1
         j += 1
-        i += 1
         print('sig =', sig)
     return
 
