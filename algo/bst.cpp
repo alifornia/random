@@ -10,11 +10,15 @@ using namespace std;
 struct Node
 {
     int data;
+    unique_ptr<Node> l;
+    unique_ptr<Node> r;
     Node *left;
     Node *right;
 };
 
-void display(Node *root)
+//const
+//when not changing
+void display(const Node *root)
 {
     if (root != NULL)
     {
@@ -32,6 +36,8 @@ Node *create(int data)
     return node;
 }
 
+//ref to ptr:
+//when you want the callee to change the pointer itself, not the object to which it points
 void insert(Node *&root, int data)
 {
     if (root == NULL)
@@ -60,6 +66,6 @@ int main()
     return 0;
 }
 //5 4 6 3 2
-// 7 4 8 3 5 2
+//7 4 8 3 5 2
 //2 -1 3 100 7 40 -7 -9 -30 20 21
 //1 3 6 8 10 14 13 4 7
