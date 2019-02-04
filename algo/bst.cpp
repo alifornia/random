@@ -10,17 +10,15 @@ using namespace std;
 struct Node
 {
     int data;
-    unique_ptr<Node> l;
-    unique_ptr<Node> r;
-    Node *left;
-    Node *right;
+    unique_ptr<Node> left;
+    unique_ptr<Node> right;
 };
 
 //const
 //when not changing
-void display(const Node *root)
+void display(const unique_ptr<Node> &root)
 {
-    if (root != NULL)
+    if (root != nullptr)
     {
         display(root->left);
         cout << root->data << " ";
@@ -28,20 +26,17 @@ void display(const Node *root)
     }
 }
 
-Node *create(int data)
+unique_ptr<Node> create(int data)
 {
-    Node *node = new Node();
+    auto node = make_unique<Node>();
     node->data = data;
-    node->left = node->right = NULL;
-    return node;
+    return move(node);
 }
 
-//ref to ptr:
-//when you want the callee to change the pointer itself, not the object to which it points
-void insert(Node *&root, int data)
+void insert(unique_ptr<Node> &root, int data)
 {
-    if (root == NULL)
-        root = create(data);
+    if (root == nullptr)
+        root = move(create(data));
     else if (data < root->data)
         insert(root->left, data);
     else
@@ -50,7 +45,7 @@ void insert(Node *&root, int data)
 
 int main()
 {
-    Node *root = NULL;
+    unique_ptr<Node> root = nullptr;
     vector<int> nodes;
 
     string line;
