@@ -2,6 +2,21 @@
 #include <iostream>
 
 using namespace std;
+//&str1 is exactly the original str1 whose type is char *
+void swapr(char *&str1, char *&str2)
+{
+    char *temp = str1;
+    str1 = str2;
+    str2 = temp;
+}
+
+//str1 is a pointer to char *
+void swapp(char **str1, char **str2)
+{
+    char *temp = *str1;
+    *str1 = *str2;
+    *str2 = temp;
+}
 
 int main()
 {
@@ -30,5 +45,12 @@ int main()
     cout << &ri << endl;
     cout << &ri << endl;
 
+    char *str1 = "ONE";
+    char *str2 = "TWO";
+    //swapr(str1, str2);
+    swapp(&str1, &str2);
+
+    cout << "str1 is " << str1 << endl;
+    cout << "str2 is " << str2 << endl;
     return 0;
 }
