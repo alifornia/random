@@ -14,8 +14,7 @@ struct Node
     unique_ptr<Node> right;
 };
 
-//const
-//when not changing
+//const if not changing
 void display(const unique_ptr<Node> &root)
 {
     if (root != nullptr)
@@ -30,13 +29,13 @@ unique_ptr<Node> create(int data)
 {
     auto node = make_unique<Node>();
     node->data = data;
-    return move(node);
+    return move(node); //https://stackoverflow.com/questions/3413470/what-is-stdmove-and-when-should-it-be-used
 }
 
 void insert(unique_ptr<Node> &root, int data)
 {
     if (root == nullptr)
-        root = move(create(data));
+        root = move(create(data)); //avoid creating another copy of obejct READ ON: //http://thbecker.net/articles/rvalue_references/section_01.html
     else if (data < root->data)
         insert(root->left, data);
     else
@@ -50,7 +49,9 @@ int main()
 
     string line;
     int value;
+
     getline(cin, line);
+
     stringstream split(line);
     while (split >> value)
         nodes.push_back(value);

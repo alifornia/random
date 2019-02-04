@@ -59,3 +59,7 @@ int main()
 //1 new and delete
 //2 shared_ptr unique_ptr
 //3 comparison
+// add rvalue and lvalue
+
+// maybe do similar thing for python
+// read on https://stackoverflow.com/questions/13299427/python-functions-call-by-reference
