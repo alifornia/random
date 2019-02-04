@@ -54,3 +54,8 @@ int main()
     cout << "str2 is " << str2 << endl;
     return 0;
 }
+
+//TODO
+//1 new and delete
+//2 shared_ptr unique_ptr
+//3 comparison
