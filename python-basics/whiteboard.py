@@ -49,6 +49,8 @@ my_set = {1, 1, 2}
 for i in my_set:
     print i
 
+squares = [n*n for n in my_list]
+print squares
 # some file
 os.chdir(".")
 for file in glob.glob("t*t.cpp"):
