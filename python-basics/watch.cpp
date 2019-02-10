@@ -10,48 +10,46 @@ struct Node
     unique_ptr<Node> left;  //8
     unique_ptr<Node> right; //8
 };
-void insert(unique_ptr<Node> &node, int data)
+void insert(unique_ptr<Node> &root, int data)
 {
     auto new_node = make_unique<Node>();
     new_node->data = data;
-    node = move(new_node);
+    root = move(new_node);
+}
+void inserts(unique_ptr<Node> &root, int stretchedData, int stretchAmount, int dir)
+{
+    if (stretchAmount)
+    {
+        if (dir == 0)
+        {
+            auto left = move(root->left);
+            insert(root->left, stretchedData);
+            root->left->left = move(left);
+            inserts(root->left, stretchedData, --stretchAmount, 0);
+        }
+        else
+        {
+            auto right = move(root->right);
+            insert(root->right, stretchedData);
+            root->right->right = move(right);
+            inserts(root->right, stretchedData, --stretchAmount, 0);
+        }
+    }
+    else
+        return;
 }
 void stretch_h(unique_ptr<Node> &root, int stretchAmount, int dir)
 {
     if (root == nullptr)
-    {
-        cout << "null" << endl;
         return;
-    }
     stretch_h(root->left, stretchAmount, 0);
     stretch_h(root->right, stretchAmount, 1);
-    cout << "stretch_h:" << root->data << endl;
-
-    root->data = root->data / stretchAmount;
+    int stretchedData = root->data / stretchAmount;
+    root->data = stretchedData;
     if (dir == 0)
-    {
-        cout << "L:" << root->data << endl;
-        auto left = move(root->left);
-        for (int i = 0; i < stretchAmount - 1; i++) //s-1
-        {
-            cout << "left" << endl;
-            insert(root->left, root->data / stretchAmount);
-            root = move(root->left);
-        }
-        root->left = move(left);
-    }
+        inserts(root, stretchedData, stretchAmount - 1, 0);
     else
-    {
-        cout << "R:" << root->data << endl;
-        auto right = move(root->right);
-        for (int i = 0; i < stretchAmount - 1; i++) //s-1
-        {
-            insert(root->right, root->data / stretchAmount);
-            cout << "right" << endl;
-            root = move(root->right);
-        }
-        root->right = move(right);
-    }
+        inserts(root, stretchedData, stretchAmount - 1, 1);
 }
 void stretch(unique_ptr<Node> &root, int stretchAmount)
 {
@@ -78,11 +76,10 @@ int main()
     insert(root->right->left, 19);
     insert(root->right->right, 6);
     display(root);
-    cout << "here" << endl;
-    stretch(root, 2);
-
-    cout << "disp: " << root->data << endl; // root is pointing to a wrong root!!!
+    cout << endl;
+    stretch(root, 3);
     display(root);
+    cout << endl;
 
     return 0;
 }
