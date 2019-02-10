@@ -4,107 +4,85 @@
 
 using namespace std;
 
-struct Nodee
-{
-    int data;
-};
 struct Node
 {
     int data;               //4
     unique_ptr<Node> left;  //8
     unique_ptr<Node> right; //8
 };
-
+void insert(unique_ptr<Node> &node, int data)
+{
+    auto new_node = make_unique<Node>();
+    new_node->data = data;
+    node = move(new_node);
+}
 void stretch_h(unique_ptr<Node> &root, int stretchAmount, int dir)
 {
     if (root == nullptr)
+    {
+        cout << "null" << endl;
         return;
+    }
+    stretch_h(root->left, stretchAmount, 0);
+    stretch_h(root->right, stretchAmount, 1);
+    cout << "stretch_h:" << root->data << endl;
+
     root->data = root->data / stretchAmount;
     if (dir == 0)
     {
-        for (int i = 0; i < stretchAmount - 1; ++i) //s-1
+        cout << "L:" << root->data << endl;
+        auto left = move(root->left);
+        for (int i = 0; i < stretchAmount - 1; i++) //s-1
         {
-            auto new_node = make_unique<Node>();
-            new_node->left = move(root->left);
-            root->left = move(new_node);
+            cout << "left" << endl;
+            insert(root->left, root->data / stretchAmount);
+            root = move(root->left);
         }
+        root->left = move(left);
     }
     else
     {
-        for (int i = 0; i < stretchAmount - 1; ++i) //s-1
+        cout << "R:" << root->data << endl;
+        auto right = move(root->right);
+        for (int i = 0; i < stretchAmount - 1; i++) //s-1
         {
-            auto new_node = make_unique<Node>();
-            new_node->left = move(root->left);
-            root->left = move(new_node);
+            insert(root->right, root->data / stretchAmount);
+            cout << "right" << endl;
+            root = move(root->right);
         }
+        root->right = move(right);
     }
-    stretch_h(root->left, stretchAmount, dir);
-    stretch_h(root->right, stretchAmount, dir);
 }
 void stretch(unique_ptr<Node> &root, int stretchAmount)
 {
-    cout << "here" << endl;
     stretch_h(root, stretchAmount, 0);
 }
-
-void insert(unique_ptr<Node> &child, int data)
+void display(const unique_ptr<Node> &root) //const if not changing
 {
-    if (child == nullptr)
+    if (root)
     {
-        auto node = make_unique<Node>();
-        node->data = data;
-        child = move(node);
+        display(root->left);
+        cout << root->data << " ";
+        display(root->right);
     }
 }
 
 int main()
 {
     //string line = "22 -1 3 100 7 40 -7 6 -9 -30 20 21 19";
-    auto root = make_unique<Node>();
-    Nodee root1;
-    root1.data = 2;
-    Nodee root2 = root1;
-    root1.data = 3;
-    cout << root2.data << endl;
-
-    return 0;
-
-    //auto l1 =
-    auto r1 = make_unique<Node>();
-    auto r2 = make_unique<Node>();
-    auto l3 = make_unique<Node>();
-    auto r3 = make_unique<Node>();
-
-    unique_ptr<Node> roott = nullptr;
-
-    root->data = 12;
+    unique_ptr<Node> root = nullptr;
+    insert(root, 12);
     insert(root->left, 81);
     insert(root->right, 34);
     insert(root->left->right, 56);
     insert(root->right->left, 19);
-    insert(root->right->left, 6);
-
-    // //l1->data = 81;
-
-    // r1->data = 34;
-    // r2->data = 56;
-    // l3->data = 19;
-    // r3->data = 6;
-
-    // //addl(root, l1);
-    // //root->left = move(l1);
-    // //addr(root, r1);
-    // //root->right = move(r1);
-
-    // cout << "bef" << endl;
-    // //addr(l1, r2);
-    // //l1->right = move(r2);
-    // cout << "aft" << endl;
-
-    // r1->left = move(l3);
-    // r1->right = move(r3);
-
+    insert(root->right->right, 6);
+    display(root);
+    cout << "here" << endl;
     stretch(root, 2);
+
+    cout << "disp: " << root->data << endl; // root is pointing to a wrong root!!!
+    display(root);
 
     return 0;
 }

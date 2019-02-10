@@ -28,7 +28,6 @@ int main()
     x2.pi[0] = -2;
     x2.i = 2;
     x1.i = -100;
-
     cout << x0.i << " - " << *x0.pi << endl;
     cout << x1.i << " - " << *x1.pi << endl;
     cout << x2.i << " - " << *x2.pi << endl;
@@ -41,6 +40,5 @@ int main()
     //copy constructor
     //i member of class is always deep copied (different)
     //pi member of class is always shallow copied (same) unless a user defined copy constructor with deep copy implemented
-
     return 0;
 }
