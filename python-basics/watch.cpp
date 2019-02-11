@@ -1,4 +1,5 @@
 //Write a recursive function named stretch that replaces each single binary tree node with multiple nodes with smaller val ues.Your function accepts two parameters : a reference to a TreeNode pointer representing the root of a binary tree, and an integer "stretching factor" K.Your function should replace each node N with K nodes, each of which stores a data value that is 1 / K of N 's original value, using integer division. The new clones of node N should extend from their parent in the same direction that N extends from its parent. For example, if N is its parent' s left child, the stretched clones of N should also be their parent's left child, and vice versa if N was a right child. The root node is a special case because it has no parent; we will handle this by saying that its stretched clones should extend to the left. Signature: stretch(root *TreeNode, stretchAmount int) 
+//https : //imgur.com/a/mfholT9
 
 #include <iostream>
 
