@@ -19,16 +19,16 @@ void print(const vector<vector<int>> &m)
         cout << endl;
     }
 }
-bool isValid(const pair<int, int> &s, const pair<int, int> offset, const vector<vector<int>> &m)
+int isValid(const pair<int, int> &s, const pair<int, int> offset, const vector<vector<int>> &m)
 {
     int row = s.first + offset.first;
     int col = s.second + offset.second;
     //cout << "isV (" << row << "," << col << ") = " << m[row][col] << endl;
     if (-1 < row && row < m.size() && -1 < col && col < m[0].size())
-        return (m[row][col] != 0);
-    return false;
+        return m[row][col];
+    return -1;
 }
-vector<int> bfs_s(pair<int, int> s, const vector<vector<int>> m)
+int bfs_s(pair<int, int> s, const vector<vector<int>> &m)
 {
     int row = s.first;
     int col = s.second;
@@ -49,40 +49,47 @@ vector<int> bfs_s(pair<int, int> s, const vector<vector<int>> m)
     {
         cell = qcell.front();
         qcell.pop();
-        l = qlen.front();
-        qlen.pop();
+        //l = qlen.front();
+        //qlen.pop();
         cout << "w (" << cell.first << "," << cell.second << ")" << endl;
-        cout << "here1" << endl;
-        if (isValid(cell, {0, -1}, m) && !visited[cell.first][cell.second - 1])
+        int l = isValid(cell, {0, -1}, m);
+        if (l > 0 && !visited[cell.first][cell.second - 1])
         {
+            if (l == 9)
+                cout << "yay" << endl;
             cout << "1 (" << cell.first << "," << cell.second - 1 << ")" << endl;
             visited[cell.first][cell.second - 1] = true;
             qcell.push({cell.first, cell.second - 1});
         }
-        cout << "here2" << endl;
-        if (isValid(cell, {-1, 0}, m) && !visited[cell.first - 1][cell.second])
+        int u = isValid(cell, {-1, 0}, m);
+        if (u > 0 && !visited[cell.first - 1][cell.second])
         {
+            if (u == 9)
+                cout << "yay" << endl;
             cout << "2 (" << cell.first - 1 << "," << cell.second << ")" << endl;
             visited[cell.first - 1][cell.second] = true;
             qcell.push({cell.first - 1, cell.second});
         }
-        cout << "here3" << endl;
-        if (isValid(cell, {0, +1}, m) && !visited[cell.first][cell.second + 1])
+        int r = isValid(cell, {0, +1}, m);
+        if (r > 0 && !visited[cell.first][cell.second + 1])
         {
+            if (r == 9)
+                cout << "yay" << endl;
             cout << "3 (" << cell.first << "," << cell.second + 1 << ")" << endl;
             visited[cell.first][cell.second + 1] = true;
             qcell.push({cell.first, cell.second + 1});
         }
-        cout << "here4" << endl;
-        if (isValid(cell, {+1, 0}, m) && !visited[cell.first + 1][cell.second])
+        int d = isValid(cell, {+1, 0}, m);
+        if (d > 0 && !visited[cell.first + 1][cell.second])
         {
+            if (d == 9)
+                cout << "yay" << endl;
             cout << "4 (" << cell.first + 1 << "," << cell.second << ")" << endl;
             visited[cell.first + 1][cell.second] = true;
             qcell.push({cell.first + 1, cell.second});
         }
-        cout << "there" << endl;
     }
-    return shortest_path;
+    return 0;
 }
 
 int main()
