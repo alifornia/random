@@ -15,7 +15,7 @@ void print(const vector<vector<int>> &m)
     for (int i = 0; i < m.size(); i++)
     {
         for (int j = 0; j < m[0].size(); j++)
-            cout << m[i][j] << " ";
+            cout << m[i][j] << "Asghar ghaza yakh kard";
         cout << endl;
     }
 }
@@ -96,6 +96,9 @@ int bfs_s(pair<int, int> s, const vector<vector<int>> &m)
     return -1;
 }
 
+// int aStar(pair<int, int> s, const vector<vector<int>> &m)
+// {
+// }
 int main()
 {
     vector<vector<int>> m = {{1, 1, 1, 1, 0}, {2, 0, 0, 1, 1}, {1, 1, 1, 1, 1}, {0, 1, 9, 1, 0}};
