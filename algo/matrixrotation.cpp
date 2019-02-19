@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <iterator>
 
 using namespace std;
 template <class T>
