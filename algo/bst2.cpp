@@ -6,50 +6,57 @@
 using namespace std;
 
 //make a template class
+template <typename T>
 class Node
 {
 public:
-  Node(int data) : data(data) {} //do i need this really?
+  Node(T data) : data(data) {} //do i need this really?
 
-  int data;
+  T data;
   unique_ptr<Node> right;
   unique_ptr<Node> left;
 };
 
+template <typename T>
 class BST
 {
 private:
-  unique_ptr<Node> root = nullptr;
-  void display_helper(const unique_ptr<Node> &root);
-  void insert_helper(unique_ptr<Node> &root, int data);
-  void remove_helper(unique_ptr<Node> &root, int data);
-  unique_ptr<Node> findMin(unique_ptr<Node> &root);
+  unique_ptr<Node<T>> root = nullptr;
+  void display_helper(const unique_ptr<Node<T>> &root);
+  void insert_helper(unique_ptr<Node<T>> &root, T data);
+  void remove_helper(unique_ptr<Node<T>> &root, T data);
+  bool search_helper(unique_ptr<Node<T>> &root, T data);
+  unique_ptr<Node<T>> findMin(unique_ptr<Node<T>> &root);
 
 public:
   void display();
-  void insert(int data);
-  void remove(int data);
+  void insert(T data);
+  void remove(T data);
+  bool search(T data);
 };
-unique_ptr<Node> BST::findMin(unique_ptr<Node> &root)
+template <typename T>
+unique_ptr<Node<T>> BST<T>::findMin(unique_ptr<Node<T>> &root)
 {
   if (root == nullptr)
     return nullptr;
   if (root->left == nullptr)
   {
-    auto node = make_unique<Node>(root->data); // COMMON MISTAKE WITH UNIQUE PTR
-    return move(node);                         //cant return move(root) ---> bug
+    auto node = make_unique<Node<T>>(root->data); // COMMON MISTAKE WITH UNIQUE PTR
+    return move(node);                            //cant return move(root) ---> bug
   }
   return findMin(root->left);
 }
-void BST::insert(int data)
+template <typename T>
+void BST<T>::insert(T data)
 {
   insert_helper(root, data);
 }
-void BST::insert_helper(unique_ptr<Node> &root, int data)
+template <typename T>
+void BST<T>::insert_helper(unique_ptr<Node<T>> &root, T data)
 {
   if (root == nullptr)
   {
-    auto node = make_unique<Node>(data);
+    auto node = make_unique<Node<T>>(data);
     root = move(node);
     return;
   }
@@ -58,11 +65,13 @@ void BST::insert_helper(unique_ptr<Node> &root, int data)
   else if (data > root->data)
     insert_helper(root->right, data);
 }
-void BST::remove(int data)
+template <typename T>
+void BST<T>::remove(T data)
 {
   remove_helper(root, data);
 }
-void BST::remove_helper(unique_ptr<Node> &root, int data)
+template <typename T>
+void BST<T>::remove_helper(unique_ptr<Node<T>> &root, T data)
 {
   if (root == nullptr) //not found
     return;
@@ -85,11 +94,30 @@ void BST::remove_helper(unique_ptr<Node> &root, int data)
     }
   }
 }
-void BST::display()
+template <typename T>
+bool BST<T>::search(T data)
+{
+  return search_helper(root, data);
+}
+template <typename T>
+bool BST<T>::search_helper(unique_ptr<Node<T>> &root, T data)
+{
+  if (root == nullptr)
+    return false;
+  if (data < root->data)
+    return search_helper(root->left, data);
+  else if (data > root->data)
+    return search_helper(root->right, data);
+  else //found
+    return true;
+}
+template <typename T>
+void BST<T>::display()
 {
   display_helper(root);
 }
-void BST::display_helper(const unique_ptr<Node> &root)
+template <typename T>
+void BST<T>::display_helper(const unique_ptr<Node<T>> &root)
 {
 
   if (root == nullptr) //base
@@ -101,21 +129,24 @@ void BST::display_helper(const unique_ptr<Node> &root)
 
 int main()
 {
-  string line = "22 -1 3 100 7 40 -7 6 -9 -30 20 21 19";
-  int value;
+  string line = "22.1 -1 3 100 7 40 -7 6 -9 -30 20 21 19";
+  float value;
   stringstream ss(line);
-  unique_ptr<Node> root;
-  BST bst;
+  unique_ptr<Node<float>> root;
+  BST<float> bst;
 
   while (ss >> value)
     bst.insert(value);
+
   bst.display();
   cout << endl;
 
   bst.remove(-1);
-  cout << "seg" << endl;
-
   bst.display();
   cout << endl;
+
+  if (bst.search(22.1))
+    cout << "found" << endl;
+
   return 0;
 }
