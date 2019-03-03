@@ -10,11 +10,11 @@ template <typename T>
 class Node
 {
 public:
-  Node(T data) : data(data) {} //do i need this really?
+  Node(const T &data, unique_ptr<Node> left = nullptr, unique_ptr<Node> right = nullptr) : data(data), left(move(left)), right(move(right)) {}
 
   T data;
-  unique_ptr<Node> right;
   unique_ptr<Node> left;
+  unique_ptr<Node> right;
 };
 
 template <typename T>
@@ -33,6 +33,17 @@ public:
   void insert(T data);
   void remove(T data);
   bool search(T data);
+  const BST &operator=(const BST &rhs)
+  {
+    // this does not work with unique_ptr
+    //you must create a new node for each node from rhs and clone its data
+    if (this != &rhs)
+    {
+      auto node = make_unique<Node<T>>(rhs.root->data);
+      root = move(node);
+    }
+    return *this;
+  }
 };
 template <typename T>
 unique_ptr<Node<T>> BST<T>::findMin(unique_ptr<Node<T>> &root)
@@ -147,6 +158,11 @@ int main()
 
   if (bst.search(22.1))
     cout << "found" << endl;
+
+  BST<float> bst2;
+  bst2 = bst;
+  bst2.display();
+  cout << endl;
 
   return 0;
 }
