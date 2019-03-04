@@ -96,13 +96,36 @@ int bfs_s(pair<int, int> s, const vector<vector<int>> &m)
     return -1;
 }
 
+int dij_s(pair<int, int> s, const vector<vector<int>> &m)
+{
+    int row = s.first;
+    int col = s.second;
+    vector<vector<bool>> visited(m.size(), vector<bool>(m[0].size(), 0));
+    vector<int> dist(m.size(), INT_MAX);
+    vector<bool> SPset(m.size(), false);
+    dist[row] = 0;
+}
+
 // int aStar(pair<int, int> s, const vector<vector<int>> &m)
 // {
 // }
 int main()
 {
+    //map of islands and seas
     vector<vector<int>> m = {{1, 1, 1, 1, 0}, {2, 0, 0, 1, 1}, {1, 1, 1, 1, 1}, {0, 1, 9, 1, 0}};
     print(m);
     cout << bfs_s({1, 0}, m) << endl;
+
+    //graph: adjacency matrix
+    vector<vector<int>> g = {{0, 4, 0, 0, 0, 0, 0, 8, 0},
+                             {4, 0, 8, 0, 0, 0, 0, 11, 0},
+                             {0, 8, 0, 7, 0, 4, 0, 0, 2},
+                             {0, 0, 7, 0, 9, 14, 0, 0, 0},
+                             {0, 0, 0, 9, 0, 10, 0, 0, 0},
+                             {0, 0, 4, 14, 10, 0, 2, 0, 0},
+                             {0, 0, 0, 0, 0, 2, 0, 1, 6},
+                             {8, 11, 0, 0, 0, 0, 1, 0, 7},
+                             {0, 0, 2, 0, 0, 0, 6, 7, 0}};
+
     return 0;
 }
